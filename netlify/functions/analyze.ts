@@ -106,18 +106,25 @@ export const handler: Handler = async (event) => {
 
           if (!res.ok) {
             let code = "";
+            let type = "";
+            let message = "";
             try {
               const j = JSON.parse(text);
-              code = j?.error?.code || j?.error?.type || "";
+              code = j?.error?.code || "";
+              type = j?.error?.type || "";
+              message = j?.error?.message || "";
             } catch {}
             if (code === "model_not_found") {
               continue;
             }
-            // If HTML timeout page returned by upstream, try next endpoint/model
             if (/^\s*<html/i.test(text)) {
               continue;
             }
-            return { statusCode: res.status, body: text || "DashScope request failed" };
+            return {
+              statusCode: res.status,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ error: { code, type, message: message || "DashScope request failed", status: res.status, endpoint, model }, raw: text })
+            };
           }
 
           const data = JSON.parse(text);
@@ -129,10 +136,13 @@ export const handler: Handler = async (event) => {
           try {
             result = JSON.parse(content);
           } catch {
-            // If model didn't honor JSON, wrap as error for clarity
-            return { statusCode: 502, body: JSON.stringify({ error: { message: "Model returned non-JSON content", content } }) };
+            return {
+              statusCode: 502,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ error: { message: "Model returned non-JSON content", endpoint, model }, raw: content })
+            };
           }
-          return { statusCode: 200, body: JSON.stringify(result) };
+          return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify(result) };
         } catch (err: any) {
           clearTimeout(timer);
           // Abort (timeout) or network error: try next endpoint/model
@@ -185,7 +195,11 @@ export const handler: Handler = async (event) => {
             if (/^\s*<html/i.test(text)) {
               continue;
             }
-            return { statusCode: res.status, body: text || "DashScope request failed" };
+            return {
+              statusCode: res.status,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ error: { message: "DashScope request failed", status: res.status, endpoint, model }, raw: text })
+            };
           }
 
           const data = JSON.parse(text);
@@ -197,9 +211,13 @@ export const handler: Handler = async (event) => {
           try {
             result = JSON.parse(outputText);
           } catch {
-            return { statusCode: 502, body: JSON.stringify({ error: { message: "Model returned non-JSON output_text", outputText } }) };
+            return {
+              statusCode: 502,
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ error: { message: "Model returned non-JSON output_text", endpoint, model }, raw: outputText })
+            };
           }
-          return { statusCode: 200, body: JSON.stringify(result) };
+          return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify(result) };
         } catch (err: any) {
           clearTimeout(timer);
           continue;
@@ -207,8 +225,16 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    return { statusCode: 502, body: "All candidate models/endpoints failed. Please set DASHSCOPE_MODEL to a valid visual model or configure DASHSCOPE_ENDPOINT." };
+    return {
+      statusCode: 502,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: { message: "All candidate models/endpoints failed. Please set DASHSCOPE_MODEL to a valid visual model or configure DASHSCOPE_ENDPOINT." } })
+    };
   } catch (e: any) {
-    return { statusCode: 500, body: String(e?.message || e) };
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: { message: String(e?.message || e) } })
+    };
   }
 };
