@@ -29,6 +29,7 @@ export const handler: Handler = async (event) => {
     const preferred = sanitize(process.env.DASHSCOPE_MODEL || process.env.VITE_DASHSCOPE_MODEL) || "qwen2.5-vl";
     const candidates = Array.from(new Set([preferred, "qwen-vl-plus", "qwen2.5-vl-plus", "qwen-vl-max", "qwen2.5-vl"]));
     const base1 = sanitize(process.env.DASHSCOPE_ENDPOINT || process.env.VITE_DASHSCOPE_ENDPOINT) || "https://dashscope.aliyuncs.com";
+    const workspace = sanitize(process.env.DASHSCOPE_WORKSPACE || process.env.VITE_DASHSCOPE_WORKSPACE);
     const endpoints = [
       base1 + "/v1/chat/completions",
       "https://dashscope-intl.aliyuncs.com/v1/chat/completions",
@@ -101,6 +102,7 @@ export const handler: Handler = async (event) => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${apiKey}`,
               "X-DashScope-API-Key": apiKey
+              , ...(workspace ? { "X-DashScope-Workspace": workspace } : {})
             },
             body: JSON.stringify(payload),
             signal: controller.signal
@@ -188,6 +190,7 @@ export const handler: Handler = async (event) => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${apiKey}`,
               "X-DashScope-API-Key": apiKey
+              , ...(workspace ? { "X-DashScope-Workspace": workspace } : {})
             },
             body: JSON.stringify(payload),
             signal: controller.signal
