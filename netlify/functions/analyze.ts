@@ -7,8 +7,8 @@ const cleanBase64 = (dataUrl: string) => {
 
 export const handler: Handler = async (event) => {
   try {
-    const rawKey = (process.env.DASHSCOPE_API_KEY || process.env.VITE_DASHSCOPE_API_KEY) as string | undefined;
-    const apiKey = rawKey ? rawKey.trim().replace(/^['"`]+|['"`]+$/g, "") : undefined;
+    const sanitize = (v?: string | null) => (v ? v.trim().replace(/^['"`]+|['"`]+$/g, "") : undefined);
+    const apiKey = sanitize(process.env.DASHSCOPE_API_KEY || process.env.VITE_DASHSCOPE_API_KEY);
     if (!apiKey) {
       return { statusCode: 500, body: "DASHSCOPE_API_KEY is missing (ensure site env set and redeployed)" };
     }
@@ -22,11 +22,11 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: "Missing images" };
     }
 
-    const preferred = (process.env.DASHSCOPE_MODEL || process.env.VITE_DASHSCOPE_MODEL || "qwen2.5-vl") as string;
+    const preferred = sanitize(process.env.DASHSCOPE_MODEL || process.env.VITE_DASHSCOPE_MODEL) || "qwen2.5-vl";
     const candidates = Array.from(new Set([preferred, "qwen-vl-plus", "qwen2.5-vl-plus", "qwen-vl-max", "qwen2.5-vl"]));
+    const base1 = sanitize(process.env.DASHSCOPE_ENDPOINT || process.env.VITE_DASHSCOPE_ENDPOINT) || "https://dashscope.aliyuncs.com";
     const endpoints = [
-      (process.env.DASHSCOPE_ENDPOINT || process.env.VITE_DASHSCOPE_ENDPOINT || "https://dashscope.aliyuncs.com") + 
-        "/compatible-mode/v1/chat/completions",
+      base1 + "/compatible-mode/v1/chat/completions",
       "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions"
     ];
 
