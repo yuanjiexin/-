@@ -7,9 +7,9 @@ const cleanBase64 = (dataUrl: string) => {
 
 export const handler: Handler = async (event) => {
   try {
-    const apiKey = process.env.DASHSCOPE_API_KEY as string | undefined;
+    const apiKey = (process.env.DASHSCOPE_API_KEY || process.env.VITE_DASHSCOPE_API_KEY) as string | undefined;
     if (!apiKey) {
-      return { statusCode: 500, body: "DASHSCOPE_API_KEY is missing" };
+      return { statusCode: 500, body: "DASHSCOPE_API_KEY is missing (ensure site env set and redeployed)" };
     }
 
     if (!event.body) {
@@ -92,4 +92,3 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: String(e?.message || e) };
   }
 };
-
