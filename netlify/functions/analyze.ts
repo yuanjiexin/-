@@ -46,7 +46,7 @@ export const handler: Handler = async (event) => {
           messages: [
           {
             role: "system",
-            content: [{ type: "text", text: String(systemInstruction || "") }]
+            content: [{ type: "text", text: String(systemInstruction || "") + "\n严格按 JSON 输出，字段为 {summary: string, issues: Array<{title, description, location, severity, category, box_2d:number[]}>}." }]
           },
           {
             role: "user",
@@ -55,38 +55,11 @@ export const handler: Handler = async (event) => {
               { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64(designImageBase64)}` } },
               { type: "text", text: "Development Screenshot (Implementation):" },
               { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64(devImageBase64)}` } },
-              { type: "text", text: "Compare and find visual discrepancies. Return result in Chinese." }
+              { type: "text", text: "Compare and find visual discrepancies. Return result in Chinese and strictly JSON." }
             ]
           }
         ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "AnalysisResult",
-            schema: {
-              type: "object",
-              properties: {
-                summary: { type: "string" },
-                issues: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                      description: { type: "string" },
-                      location: { type: "string" },
-                      severity: { type: "string", enum: ["High", "Medium", "Low"] },
-                      category: { type: "string", enum: ["Layout", "Style", "Content"] },
-                      box_2d: { type: "array", items: { type: "number" } }
-                    },
-                    required: ["title", "description", "severity", "category", "location", "box_2d"]
-                  }
-                }
-              },
-              required: ["summary", "issues"]
-            }
-          }
-        }
+        response_format: { type: "json_object" }
         };
 
         const controller = new AbortController();
@@ -160,7 +133,7 @@ export const handler: Handler = async (event) => {
           model,
           input: {
             messages: [
-              { role: "system", content: [{ type: "text", text: String(systemInstruction || "") }] },
+              { role: "system", content: [{ type: "text", text: String(systemInstruction || "") + "\n严格按 JSON 输出，字段为 {summary, issues[]}" }] },
               {
                 role: "user",
                 content: [
@@ -168,7 +141,7 @@ export const handler: Handler = async (event) => {
                   { type: "image", image: `data:image/jpeg;base64,${cleanBase64(designImageBase64)}` },
                   { type: "text", text: "Development Screenshot (Implementation):" },
                   { type: "image", image: `data:image/jpeg;base64,${cleanBase64(devImageBase64)}` },
-                  { type: "text", text: "Compare and find visual discrepancies. Return result in Chinese and only JSON." }
+                  { type: "text", text: "Compare and find visual discrepancies. Return result in Chinese and strictly JSON." }
                 ]
               }
             ]
