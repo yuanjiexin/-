@@ -5,7 +5,7 @@ import { UploadedImage } from '../types';
  * normalizing the width to a standard size (e.g., 1200px) to ensure
  * consistency between design and dev screenshots for the overlay.
  */
-export const processImage = (file: File, targetWidth = 1200): Promise<UploadedImage> => {
+export const processImage = (file: File, targetWidth = 1024): Promise<UploadedImage> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -27,7 +27,7 @@ export const processImage = (file: File, targetWidth = 1200): Promise<UploadedIm
         ctx.drawImage(img, 0, 0, targetWidth, canvas.height);
         
         resolve({
-          src: canvas.toDataURL('image/jpeg', 0.9), // Compress slightly
+          src: canvas.toDataURL('image/jpeg', 0.75),
           width: targetWidth,
           height: canvas.height,
           file: file
@@ -80,7 +80,7 @@ export const getTransformedImage = (
       ctx.drawImage(img, 0, 0, img.width, img.height);
       ctx.restore();
 
-      resolve(canvas.toDataURL('image/jpeg', 0.9));
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
     };
     img.onerror = reject;
     img.src = src;

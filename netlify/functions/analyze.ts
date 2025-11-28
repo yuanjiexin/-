@@ -10,16 +10,20 @@ export const handler: Handler = async (event) => {
     const sanitize = (v?: string | null) => (v ? v.trim().replace(/^['"`]+|['"`]+$/g, "") : undefined);
     const apiKey = sanitize(process.env.DASHSCOPE_API_KEY || process.env.VITE_DASHSCOPE_API_KEY);
     if (!apiKey) {
-      return { statusCode: 500, body: "DASHSCOPE_API_KEY is missing (ensure site env set and redeployed)" };
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: { message: "DASHSCOPE_API_KEY is missing (ensure site env set and redeployed)" } })
+      };
     }
 
     if (!event.body) {
-      return { statusCode: 400, body: "Missing body" };
+      return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: { message: "Missing body" } }) };
     }
 
     const { designImageBase64, devImageBase64, systemInstruction } = JSON.parse(event.body);
     if (!designImageBase64 || !devImageBase64) {
-      return { statusCode: 400, body: "Missing images" };
+      return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: { message: "Missing images" } }) };
     }
 
     const preferred = sanitize(process.env.DASHSCOPE_MODEL || process.env.VITE_DASHSCOPE_MODEL) || "qwen2.5-vl";
