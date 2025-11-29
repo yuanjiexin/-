@@ -45,10 +45,12 @@ const normalizeIssue = (issue) => {
 
 const healthHandler = (req, res) => {
   const hasKey = Boolean(process.env.DASHSCOPE_API_KEY || process.env.VITE_DASHSCOPE_API_KEY)
-  const endpoint = sanitize(process.env.DASHSCOPE_ENDPOINT || process.env.VITE_DASHSCOPE_ENDPOINT)
+  const region = sanitize(process.env.DASHSCOPE_REGION || process.env.VITE_DASHSCOPE_REGION) || 'intl'
+  const endpointEnv = sanitize(process.env.DASHSCOPE_ENDPOINT || process.env.VITE_DASHSCOPE_ENDPOINT)
   const model = sanitize(process.env.DASHSCOPE_MODEL || process.env.VITE_DASHSCOPE_MODEL)
   const workspace = sanitize(process.env.DASHSCOPE_WORKSPACE || process.env.VITE_DASHSCOPE_WORKSPACE)
-  res.json({ hasKey, endpoint: endpoint || null, model: model || null, workspace: workspace || null })
+  const endpointUsed = endpointEnv || (region === 'intl' ? 'https://dashscope-intl.aliyuncs.com' : 'https://dashscope.aliyuncs.com')
+  res.json({ hasKey, region, endpoint: endpointUsed, model: model || null, workspace: workspace || null })
 }
 app.get('/health', healthHandler)
 app.get('/api/health', healthHandler)
@@ -73,12 +75,11 @@ const analyzeHandler = async (req, res) => {
     ]
     const baseCandidates = preferred && allowed.includes(preferred) ? [preferred, ...allowed] : allowed
     const candidates = Array.from(new Set(baseCandidates))
-    const base1 = sanitize(process.env.DASHSCOPE_ENDPOINT || process.env.VITE_DASHSCOPE_ENDPOINT) || 'https://dashscope.aliyuncs.com'
+    const region = sanitize(process.env.DASHSCOPE_REGION || process.env.VITE_DASHSCOPE_REGION) || 'intl'
+    const explicit = sanitize(process.env.DASHSCOPE_ENDPOINT || process.env.VITE_DASHSCOPE_ENDPOINT)
     const workspace = sanitize(process.env.DASHSCOPE_WORKSPACE || process.env.VITE_DASHSCOPE_WORKSPACE)
-    const endpoints = [
-      base1 + '/compatible-mode/v1/chat/completions',
-      'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions'
-    ]
+    const base = explicit || (region === 'intl' ? 'https://dashscope-intl.aliyuncs.com' : 'https://dashscope.aliyuncs.com')
+    const endpoints = [base + '/compatible-mode/v1/chat/completions']
 
     for (const endpoint of endpoints) {
       for (const model of candidates) {
