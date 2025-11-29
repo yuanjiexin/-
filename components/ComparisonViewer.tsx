@@ -42,8 +42,16 @@ export const ComparisonViewer: React.FC<ComparisonViewerProps> = ({
     return issues.map((issue, idx) => {
       if (!issue.box_2d) return null;
       
-      const [ymin, xmin, ymax, xmax] = issue.box_2d;
+      const raw = issue.box_2d;
+      const a = raw.map((v) => (v <= 1 ? v * 1000 : v));
+      const asYX = [a[0], a[1], a[2], a[3]] as [number, number, number, number];
+      const asXY = [a[1], a[0], a[3], a[2]] as [number, number, number, number];
+      const valid = (b: [number, number, number, number]) => b.every((v) => v >= 0 && v <= 1000) && b[0] <= b[2] && b[1] <= b[3];
+      const useXY = valid(asXY) && !valid(asYX);
+      const [ymin, xmin, ymax, xmax] = useXY ? asXY : asYX;
       const isActive = activeIssueIndex === idx;
+      const nearBottom = ymax > 950;
+      const nearRight = xmax > 950;
 
       return (
         <div
@@ -64,8 +72,12 @@ export const ComparisonViewer: React.FC<ComparisonViewerProps> = ({
           title={issue.title}
         >
           {isActive && (
-            <div className="absolute -top-7 left-0 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap shadow-sm z-40">
-              #{idx + 1} {issue.title}
+            <div
+              className={`absolute ${nearBottom ? '-top-7' : 'top-full'} ${nearRight ? 'right-0' : 'left-0'} bg-red-600 text-white text-[10px] px-2 py-1 rounded shadow-sm z-40 max-w-[260px] whitespace-normal break-words`}
+              style={{ marginTop: nearBottom ? undefined : 4 }}
+            >
+              <div className="font-semibold">#{idx + 1} {issue.title}</div>
+              <div className="opacity-90">{issue.description}</div>
             </div>
           )}
         </div>
@@ -181,12 +193,8 @@ export const ComparisonViewer: React.FC<ComparisonViewerProps> = ({
                         className="w-full h-auto block" 
                     />
                     {/* Only show bounding boxes on Dev image in side-by-side */}
-                    <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                       <div className="pointer-events-auto w-full h-full relative">
-                         {renderBoundingBoxes()}
-                       </div>
-                    </div>
-                </div>
+                    {/* Overlay markers disabled per request */}
+                  </div>
             </div>
           </div>
         ) : (
@@ -206,12 +214,7 @@ export const ComparisonViewer: React.FC<ComparisonViewerProps> = ({
                     className="w-full h-auto block"
                  />
                  
-                 {/* Bounding Boxes Layer (Attached to Dev Image dimensions) */}
-                 <div className="absolute top-0 left-0 w-full h-full z-20 pointer-events-none">
-                     <div className="relative w-full h-full pointer-events-auto">
-                        {renderBoundingBoxes()}
-                     </div>
-                 </div>
+                 {/* Overlay markers disabled per request */}
              </div>
 
              {/* Design Image (Overlay - Absolute) */}

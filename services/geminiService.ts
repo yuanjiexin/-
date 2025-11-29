@@ -44,17 +44,25 @@ export const analyzeDesignDiscrepancies = async (
   `;
 
   try {
-    const res = await fetch("/.netlify/functions/analyze", {
+    const url = import.meta.env.DEV ? "/api/analyze" : "/.netlify/functions/analyze";
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ designImageBase64, devImageBase64, systemInstruction })
     });
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(t || "Analyze function request failed");
+    const text = await res.text();
+    let data: any = null;
+    try { data = JSON.parse(text); } catch {}
+    if (data && data.error) {
+      throw new Error(JSON.stringify(data.error));
     }
-    const result = (await res.json()) as AnalysisResult;
-    return result;
+    if (data && data.summary && Array.isArray(data.issues)) {
+      return data as AnalysisResult;
+    }
+    if (!res.ok) {
+      throw new Error(text || "DashScope request failed");
+    }
+    throw new Error("Unexpected response from analyze function");
   } catch (error) {
     console.error("Analyze Function Error:", error);
     throw error as any;

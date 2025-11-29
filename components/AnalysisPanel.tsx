@@ -125,8 +125,18 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         ) : (
             result.issues.map((issue, idx) => {
             const isActive = activeIssueIndex === idx;
+            const toPct = (v: number) => (v <= 1 ? v * 100 : (v / 1000) * 100);
+            const box = issue.box_2d;
+            const detail = box && box.length === 4 ? (() => {
+                const [ymin, xmin, ymax, xmax] = box;
+                const top = toPct(ymin).toFixed(1);
+                const left = toPct(xmin).toFixed(1);
+                const height = (toPct(ymax) - toPct(ymin)).toFixed(1);
+                const width = (toPct(xmax) - toPct(xmin)).toFixed(1);
+                return `位置: 上 ${top}% ・ 左 ${left}% ・ 宽 ${width}% ・ 高 ${height}%`;
+            })() : null;
             return (
-                <div 
+              <div 
                 key={idx} 
                 onClick={() => onIssueSelect(idx)}
                 className={`
@@ -162,8 +172,13 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                         </svg>
                         {issue.location}
                     </span>
+                    {detail && (
+                      <span className="bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-800/50">
+                        {detail}
+                      </span>
+                    )}
                 </div>
-                </div>
+              </div>
             );
             })
         )}

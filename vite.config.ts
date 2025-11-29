@@ -11,6 +11,15 @@ export default defineConfig(({ mode }) => {
       // Safely inject API_KEY. 
       // NOTE: Do not define "process.env" as an object, it breaks other libraries.
       'process.env.API_KEY': JSON.stringify(env.API_KEY)
+    },
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8787',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, '')
+        }
+      }
     }
   }
 })

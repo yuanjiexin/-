@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeIssueIndex, setActiveIssueIndex] = useState<number | null>(null);
   const [ignoreContent, setIgnoreContent] = useState(false);
+  const [lightMode, setLightMode] = useState(false);
   
   // Lifted state for alignment so we can use it during analysis
   const [alignment, setAlignment] = useState<AlignmentConfig>({ scale: 1, x: 0, y: 0 });
@@ -87,7 +88,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen text-zinc-100 bg-black overflow-hidden font-sans">
+    <div className={`flex flex-col h-screen overflow-hidden font-sans ${lightMode ? 'theme-invert' : ''} text-zinc-100 bg-black`}>
       {/* Header */}
       <header className="flex-none h-16 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between px-6 z-10">
         <div className="flex items-center gap-3">
@@ -98,6 +99,23 @@ const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setLightMode(!lightMode)}
+            aria-pressed={lightMode}
+            title={lightMode ? '切换到暗黑模式' : '切换到明亮模式'}
+            className="flex items-center justify-center w-9 h-9 rounded-md border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 transition-colors"
+          >
+            {lightMode ? (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+              </svg>
+            )}
+          </button>
           <button
             onClick={handleAnalyze}
             disabled={!designImage || !devImage || isAnalyzing}
