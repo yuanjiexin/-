@@ -44,27 +44,47 @@ export const analyzeDesignDiscrepancies = async (
   `;
 
   try {
-    const url = "/api/analyze";
+    // Pre-flight: check server health and key presence
+    try {
+      const h = await fetch('/api/health');
+      if (h.ok) {
+        const j = await h.json();
+        if (!j.hasKey) {
+          throw new Error('分析失败：服务端未配置 DASHSCOPE_API_KEY');
+        }
+      }
+    } catch {}
+
+    const url = '/api/analyze';
     const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ designImageBase64, devImageBase64, systemInstruction })
     });
+
     const text = await res.text();
     let data: any = null;
     try { data = JSON.parse(text); } catch {}
+
     if (data && data.error) {
-      throw new Error(JSON.stringify(data.error));
+      const msg = data.error.message || data.error.type || '分析服务返回错误';
+      throw new Error(`分析失败：${msg}`);
     }
     if (data && data.summary && Array.isArray(data.issues)) {
       return data as AnalysisResult;
     }
     if (!res.ok) {
-      throw new Error(text || "DashScope request failed");
+      const isHtml = /^\s*<html/i.test(text);
+      const gateway = /bad gateway/i.test(text);
+      if (gateway || isHtml) {
+        throw new Error('分析失败：网关 502（Bad Gateway）。请检查出站网络或模型服务可达性');
+      }
+      throw new Error(text || '分析服务请求失败');
     }
-    throw new Error("Unexpected response from analyze function");
-  } catch (error) {
-    console.error("Analyze Function Error:", error);
-    throw error as any;
+    throw new Error('Unexpected response from analyze function');
+  } catch (error: any) {
+    const msg = typeof error?.message === 'string' ? error.message : String(error);
+    console.error('Analyze Function Error:', msg);
+    throw new Error(msg);
   }
 };

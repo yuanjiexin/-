@@ -61,17 +61,18 @@ const analyzeHandler = async (req, res) => {
     const { designImageBase64, devImageBase64, systemInstruction } = req.body || {}
     if (!designImageBase64 || !devImageBase64) return res.status(400).json({ error: { message: 'Missing images' } })
 
-    const preferred = sanitize(process.env.DASHSCOPE_MODEL || process.env.VITE_DASHSCOPE_MODEL) || 'qwen-vl-max'
-    const candidates = Array.from(new Set([
-      preferred,
+    const preferred = sanitize(process.env.DASHSCOPE_MODEL || process.env.VITE_DASHSCOPE_MODEL)
+    const allowed = [
       'qwen-vl-max',
       'qwen-vl-max-latest',
-      'qwen3-vl-32b-thinking',
       'qwen3-vl-32b-instruct',
-      'qwen3-vl-30b-a3b-thinking',
+      'qwen3-vl-32b-thinking',
       'qwen3-vl-30b-a3b-instruct',
+      'qwen3-vl-30b-a3b-thinking',
       'qwen3-vl-8b-thinking'
-    ]))
+    ]
+    const baseCandidates = preferred && allowed.includes(preferred) ? [preferred, ...allowed] : allowed
+    const candidates = Array.from(new Set(baseCandidates))
     const base1 = sanitize(process.env.DASHSCOPE_ENDPOINT || process.env.VITE_DASHSCOPE_ENDPOINT) || 'https://dashscope.aliyuncs.com'
     const workspace = sanitize(process.env.DASHSCOPE_WORKSPACE || process.env.VITE_DASHSCOPE_WORKSPACE)
     const endpoints = [
@@ -130,6 +131,9 @@ const analyzeHandler = async (req, res) => {
             } catch {}
             if (/^\s*<html/i.test(text)) continue
             if (code === 'model_not_found') continue
+            if (code === 'invalid_api_key') continue
+            if (code === 'permission_denied') continue
+            if ([401,403,404,502].includes(Number(resDash.status))) continue
             return res.status(resDash.status).json({ error: { code, type, message: message || 'DashScope request failed', endpoint, model }, raw: text })
           }
 
