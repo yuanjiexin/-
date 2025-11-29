@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [activeIssueIndex, setActiveIssueIndex] = useState<number | null>(null);
   const [ignoreContent, setIgnoreContent] = useState(false);
   const [lightMode, setLightMode] = useState(false);
+  const [donateOpen, setDonateOpen] = useState(false);
   
   // Lifted state for alignment so we can use it during analysis
   const [alignment, setAlignment] = useState<AlignmentConfig>({ scale: 1, x: 0, y: 0 });
@@ -99,6 +100,15 @@ const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setDonateOpen(true)}
+            title="打赏"
+            className="flex items-center justify-center w-9 h-9 rounded-md border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-pink-400 transition-colors"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 21s-6.716-4.297-9.363-7.016C.659 11.97.5 9.39 2.07 7.82 3.64 6.25 6.22 6.41 7.79 7.98L12 12.19l4.21-4.21c1.57-1.57 4.15-1.73 5.72-.16 1.57 1.57 1.41 4.15-.57 6.164C18.716 16.703 12 21 12 21z" />
+            </svg>
+          </button>
           <button
             onClick={() => setLightMode(!lightMode)}
             aria-pressed={lightMode}
@@ -210,6 +220,28 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
+      {donateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center theme-reset">
+          <div className={`absolute inset-0 ${lightMode ? 'bg-zinc-200/50' : 'bg-black/60'}`} onClick={() => setDonateOpen(false)}></div>
+          <div className={`relative w-[420px] max-w-[90vw] rounded-xl border p-6 shadow-xl backdrop-blur ${lightMode ? 'bg-white border-zinc-200 text-zinc-800' : 'bg-zinc-900/90 border-zinc-800 text-zinc-200'}`}>
+            <button onClick={() => setDonateOpen(false)} className="absolute top-3 right-3 w-8 h-8 rounded-md hover:bg-zinc-800/30 text-zinc-400 flex items-center justify-center">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="flex flex-col items-center gap-2 mb-4">
+              <svg className="w-6 h-6 text-pink-500" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21s-6.716-4.297-9.363-7.016C.659 11.97.5 9.39 2.07 7.82 3.64 6.25 6.22 6.41 7.79 7.98L12 12.19l4.21-4.21c1.57-1.57 4.15-1.73 5.72-.16 1.57 1.57 1.41 4.15-.57 6.164C18.716 16.703 12 21 12 21z" />
+              </svg>
+              <div className="text-base font-semibold">感谢支持</div>
+              <div className="text-xs text-zinc-400">如果这个工具对你有帮助，欢迎打赏支持开发</div>
+            </div>
+            <div className="flex items-center justify-center">
+              <img src="https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAELqh5pKtR1cvhbwsjZPuG6tdHnLs4INwACqB8AApELWVUDHWgAAcbJj3Q2BA.png" alt="打赏二维码" className={`w-80 h-80 object-contain rounded-md border ${lightMode ? 'border-zinc-200' : 'border-zinc-800'} bg-white`} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
